@@ -25,4 +25,50 @@ public class AdminUserServiceImpl implements AdminUserService {
         List<AdminUser> adminUserList = adminUserDao.selectByExample(example);
         return  adminUserList.size() == 0 ? null : adminUserList.get(0);
     }
+
+    @Override
+    public AdminUser getUserDetailById(Integer loginUserId) {
+        return adminUserDao.selectByPrimaryKey(loginUserId);
+    }
+
+    /*
+        根据原密码 看能否查出来 用户
+            如果能，更新
+            不能，返回false
+     */
+    @Override
+    public boolean updatePassword(Integer loginUserId, String originalPassword, String newPassword) {
+        AdminUser adminUser = adminUserDao.selectByPrimaryKey(loginUserId);
+        //当前用户非空才可以进行更改
+        if (adminUser != null) {
+            String originalPasswordMd5 = MD5Utils.MD5Encode(originalPassword, "UTF-8");
+            String newPasswordMd5 = MD5Utils.MD5Encode(newPassword, "UTF-8");
+            //比较原密码是否正确
+            if (originalPasswordMd5.equals(adminUser.getLoginPassword())) {
+                //设置新密码并修改
+                adminUser.setLoginPassword(newPasswordMd5);
+                if (adminUserDao.updateByPrimaryKeySelective(adminUser) > 0) {
+                    //修改成功则返回true
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean updateName(Integer loginUserId, String loginUserName, String nickName) {
+        AdminUser adminUser = adminUserDao.selectByPrimaryKey(loginUserId);
+        //当前用户非空才可以进行更改
+        if (adminUser != null) {
+            //修改信息
+            adminUser.setLoginUserName(loginUserName);
+            adminUser.setNickName(nickName);
+            if (adminUserDao.updateByPrimaryKeySelective(adminUser) > 0) {
+                //修改成功则返回true
+                return true;
+            }
+        }
+        return false;
+    }
 }
